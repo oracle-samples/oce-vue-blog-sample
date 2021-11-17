@@ -5,6 +5,7 @@
 /* eslint-disable no-param-reassign */
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
+const sdkPackage = require('./node_modules/@oracle/content-management-sdk/package.json');
 
 // If the application is to be served at a URL other than the root, then BASE_URL must be specified
 // it is needed to specify the URL for the static assets and for the router
@@ -16,6 +17,9 @@ if (process.env.BASE_URL) {
     BASE_URL = BASE_URL.substr(0, BASE_URL.length - 1);
   }
 }
+
+const BUILD_TAG = process.env.BUILD_TAG || 'none';
+const SDK_VERSION = sdkPackage.version;
 
 module.exports = {
   devServer: {
@@ -32,7 +36,7 @@ module.exports = {
   // By default Vue assumes the app will be deployed at the root, https://www.host:port
   // If the app is deployed at a path, "publicPath" must be the value of the path, e.g. if
   // the app is deployed at https://host:port/my-app the publicPath is set to '/my-app'
-  publicPath: BASE_URL ? BASE_URL : '/',
+  publicPath: BASE_URL || '/',
 
   chainWebpack: (webpackConfig) => {
     // Settings common to both client and server bundles
@@ -49,7 +53,8 @@ module.exports = {
         args[0] = {
           ...args[0],
           'process.env.BASE_URL': JSON.stringify(BASE_URL),
-          'process.env.EXPRESS_SERVER_PORT': JSON.stringify(process.env.EXPRESS_SERVER_PORT),
+          'process.env.BUILD_TAG': JSON.stringify(BUILD_TAG),
+          'process.env.SDK_VERSION': JSON.stringify(SDK_VERSION),
           'process.env.PREVIEW': JSON.stringify(process.env.PREVIEW),
           'process.env.AUTH': JSON.stringify(process.env.AUTH),
           'process.env.SERVER_URL': JSON.stringify(process.env.SERVER_URL),
@@ -58,7 +63,7 @@ module.exports = {
           'process.env.CLIENT_ID': JSON.stringify(process.env.CLIENT_ID),
           'process.env.CLIENT_SECRET': JSON.stringify(process.env.CLIENT_SECRET),
           'process.env.CLIENT_SCOPE_URL': JSON.stringify(process.env.CLIENT_SCOPE_URL),
-          'process.env.IDCS_URL': JSON.stringify(process.env.IDCS_URL)
+          'process.env.IDCS_URL': JSON.stringify(process.env.IDCS_URL),
         };
         return args;
       });
@@ -79,10 +84,10 @@ module.exports = {
 
       // Specify the root file of the server application
       webpackConfig.entry('app').clear().add('./src/server/server.js');
-      
+
       // specify the name of the built server bundle
       webpackConfig.output.filename('serverBundle.js');
-      
+
       webpackConfig.output.libraryTarget('commonjs2');
 
       // Tell WebPack to not bundle any libraries into our output bundle on the server
