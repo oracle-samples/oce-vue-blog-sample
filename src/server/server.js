@@ -19,7 +19,7 @@ import express from 'express';
 import serialize from 'serialize-javascript';
 import { renderToString } from '@vue/server-renderer';
 import buildApp from '../app';
-import { getAuthValue, isAuthNeeded } from '../scripts/server-config-utils';
+import getClient from '../scripts/server-config-utils';
 
 // parse the .env file
 dotenv.config();
@@ -105,13 +105,14 @@ function handleContentRequest(req, res, authValue) {
  * - 'src/scripts/utils.getImageUrl' for the code proxying requests for image binaries
  */
 server.use('/content/', (req, res) => {
-  if (isAuthNeeded()) {
-    getAuthValue().then((authValue) => {
+  const client = getClient();
+  client.getAuthorizationHeaderValue().then((authValue) => {
+    if (authValue !== '') {
       handleContentRequest(req, res, authValue);
-    });
-  } else {
-    handleContentRequest(req, res, '');
-  }
+    } else {
+      handleContentRequest(req, res, '');
+    }
+  });
 });
 
 /*

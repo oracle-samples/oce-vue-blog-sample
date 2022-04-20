@@ -60,10 +60,8 @@ module.exports = {
           'process.env.SERVER_URL': JSON.stringify(process.env.SERVER_URL),
           'process.env.API_VERSION': JSON.stringify(process.env.API_VERSION),
           'process.env.CHANNEL_TOKEN': JSON.stringify(process.env.CHANNEL_TOKEN),
-          'process.env.CLIENT_ID': JSON.stringify(process.env.CLIENT_ID),
-          'process.env.CLIENT_SECRET': JSON.stringify(process.env.CLIENT_SECRET),
-          'process.env.CLIENT_SCOPE_URL': JSON.stringify(process.env.CLIENT_SCOPE_URL),
-          'process.env.IDCS_URL': JSON.stringify(process.env.IDCS_URL),
+          'process.env.AUTH_PARAMS': JSON.stringify(process.env.AUTH_PARAMS),
+          'process.env.OPTIONS': JSON.stringify(process.env.OPTIONS),
         };
         return args;
       });
@@ -75,6 +73,15 @@ module.exports = {
 
       // Specify the root file of the client application
       webpackConfig.entry('app').clear().add('./src/client/main.js');
+
+      webpackConfig.resolve.set('fallback', {
+        assert: false,
+        http: false,
+        https: false,
+        net: false,
+        tls: false,
+        url: false,
+      });
     } else {
       // Server side bundle settings
 
