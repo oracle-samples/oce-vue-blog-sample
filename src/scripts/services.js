@@ -61,16 +61,18 @@ function flattenArray(inArray, result = []) {
 function addRendition(urls, rendition, formatstr) {
   // Get the webp format field
   const format = rendition.formats.filter((item) => item.format === `${formatstr}`)[0];
-  const self = format.links.filter((item) => item.rel === 'self')[0];
-  const url = getImageUrl(self.href);
-  const { width } = format.metadata;
+  if (format !== undefined) {
+    const self = format.links.filter((item) => item.rel === 'self')[0];
+    const url = getImageUrl(self.href);
+    const { width } = format.metadata;
 
-  // Also save the jpg format so that it can be used as a default value for images
-  if (formatstr === 'jpg') {
-    urls[rendition.name.toLowerCase()] = url;
-    urls.jpgSrcset += `${url} ${width}w,`;
-  } else {
-    urls.srcset += `${url} ${width}w,`;
+    // Also save the jpg format so that it can be used as a default value for images
+    if (formatstr === 'jpg') {
+      urls[rendition.name.toLowerCase()] = url;
+      urls.jpgSrcset += `${url} ${width}w,`;
+    } else {
+      urls.srcset += `${url} ${width}w,`;
+    }
   }
 }
 
@@ -88,6 +90,7 @@ function getSourceSet(asset) {
   if (asset.fields && asset.fields.renditions) {
     asset.fields.renditions.forEach((rendition) => {
       addRendition(urls, rendition, 'jpg');
+      addRendition(urls, rendition, 'png');
       addRendition(urls, rendition, 'webp');
     });
   }

@@ -18,6 +18,15 @@ if (process.env.BASE_URL) {
   }
 }
 
+let CONTENT_MODE = 'delivery';
+if (process.env.AUTH !== undefined || process.env.AUTH_PARAMS !== undefined) {
+  if (process.env.PREVIEW === 'true') {
+    CONTENT_MODE = 'preview';
+  } else {
+    CONTENT_MODE = 'secureDelivery';
+  }
+}
+
 const BUILD_TAG = process.env.BUILD_TAG || 'none';
 const SDK_VERSION = sdkPackage.version;
 
@@ -46,8 +55,8 @@ module.exports = {
     webpackConfig.module.rule('ts').uses.delete('cache-loader');
     webpackConfig.module.rule('tsx').uses.delete('cache-loader');
 
-    // enable our environment variables to be available in our application both on client and
-    // server (note: environment variables starting with VUE_APP_ are automatically added)
+    // env params on both the client and server
+    // (note: environment variables starting with VUE_APP_ are automatically added)
     webpackConfig.plugin('define')
       .tap((args) => {
         args[0] = {
@@ -55,19 +64,27 @@ module.exports = {
           'process.env.BASE_URL': JSON.stringify(BASE_URL),
           'process.env.BUILD_TAG': JSON.stringify(BUILD_TAG),
           'process.env.SDK_VERSION': JSON.stringify(SDK_VERSION),
-          'process.env.PREVIEW': JSON.stringify(process.env.PREVIEW),
-          'process.env.AUTH': JSON.stringify(process.env.AUTH),
           'process.env.SERVER_URL': JSON.stringify(process.env.SERVER_URL),
           'process.env.API_VERSION': JSON.stringify(process.env.API_VERSION),
           'process.env.CHANNEL_TOKEN': JSON.stringify(process.env.CHANNEL_TOKEN),
-          'process.env.AUTH_PARAMS': JSON.stringify(process.env.AUTH_PARAMS),
           'process.env.OPTIONS': JSON.stringify(process.env.OPTIONS),
+          'process.env.CONTENT_MODE': JSON.stringify(CONTENT_MODE),
         };
         return args;
       });
 
     if (!process.env.SSR) {
       // Client side bundle settings
+
+      // env params for the client
+      webpackConfig.plugin('define')
+        .tap((args) => {
+          args[0] = {
+            ...args[0],
+            'process.env.IS_BROWSER': JSON.stringify(true),
+          };
+          return args;
+        });
 
       webpackConfig.devServer.disableHostCheck(true);
 
@@ -84,6 +101,18 @@ module.exports = {
       });
     } else {
       // Server side bundle settings
+
+      // env params for the server only - contains AUTH
+      webpackConfig.plugin('define')
+        .tap((args) => {
+          args[0] = {
+            ...args[0],
+            'process.env.AUTH': JSON.stringify(process.env.AUTH),
+            'process.env.AUTH_PARAMS': JSON.stringify(process.env.AUTH_PARAMS),
+            'process.env.IS_BROWSER': JSON.stringify(false),
+          };
+          return args;
+        });
 
       // inform WebPack that we are building a bundle for NodeJS rather
       // than for the browser and to avoid packaging built-ins.
